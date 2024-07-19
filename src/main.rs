@@ -5,8 +5,18 @@ use ndarray::Array;
 use ndarray_rand;
 use ndarray_rand::RandomExt;
 use rand::seq::SliceRandom;
+use ndarray_npy::read_npy;
 fn main() {
-    println!("Hello, world!");
+    // load data and target
+    //const dim :Dim<[usize; 2]> = Dim([1797,64]);
+    let data:Array2<f64>=read_npy("src/digits_data.npy").expect("file is present and correct");
+    let target:Array1<i64> = read_npy("src/digits_target.npy").expect("file is present and correct");
+
+    println!("{:?}",data.dim());
+    println!("{:?}",target.dim());
+
+
+    return ()
 }
 // T is the type of the prediction value
 //G is type of feature data Vec<>
@@ -69,7 +79,14 @@ where f64: From<G>{
         return myvec[..D_try].to_vec();
     }
 
-    fn train(self, features: &Vec<&Vec<G>>, responses: Vec<T>, mut D_try: Option<usize>) {
+    fn find_threashold(self,features: &Vec<&Vec<G>>, responses: &Vec<T>,j:usize){
+        // return: a 1-D array with all possible thresholds along feature j
+        //(find midpoints between instances of feature j)
+        let array = Array::from_vec(features.clone());
+        let temp = array.select(Axis(1),&[j]);
+
+    }
+    fn train(self, features: &Vec<&Vec<G>>, responses: &Vec<T>, mut D_try: Option<usize>) {
         let N = features.len();
         let D = features
             .first()
@@ -79,6 +96,7 @@ where f64: From<G>{
             None => 8,
             Some(val) => val,
         };
+
         while true {
             let active_indices = RegressionTree::<T, G>::select_active_indices(D, D_try);
             
@@ -86,3 +104,4 @@ where f64: From<G>{
         todo!()
     }
 }
+
