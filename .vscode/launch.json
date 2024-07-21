@@ -7,17 +7,40 @@
         {
             "type": "lldb",
             "request": "launch",
-            "name": "Cargo test",
+            "name": "Debug executable 'supa_cube_forest'",
+            "cargo": {
+                "args": [
+                    "build",
+                    "--bin=supa_cube_forest",
+                    "--package=supa_cube_forest"
+                ],
+                "filter": {
+                    "name": "supa_cube_forest",
+                    "kind": "bin"
+                }
+            },
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "type": "lldb",
+            "request": "launch",
+            "name": "Debug unit tests in executable 'supa_cube_forest'",
             "cargo": {
                 "args": [
                     "test",
                     "--no-run",
-                ]
+                    "--bin=supa_cube_forest",
+                    "--package=supa_cube_forest"
+                ],
+                "filter": {
+                    "name": "supa_cube_forest",
+                    "kind": "bin"
+                }
             },
-            "args": []
-        }
+            "args": [],
+            "cwd": "${workspaceFolder}"
+        },
 
-        
-       
     ]
 }
