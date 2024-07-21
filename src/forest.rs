@@ -14,7 +14,7 @@ use std::ops::Add;
 // type T = i64; // T is the type of the response values
 // type R = Float64; // R is the predict return Type
 
-struct Forest<G, R>
+pub struct Forest<G, R>
 where
     G: From<f64> + FromPrimitive + Float,
     R: Clone + num::Zero,
@@ -97,7 +97,7 @@ where
         }
     }
 
-    fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug>(
+    pub fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug>(
         &mut self,
         features: &Array2<G>,
         responses: &Array1<T>,
@@ -111,7 +111,7 @@ where
         }
     }
 
-    fn predict(&self, features: &Array1<G>) -> R {
+    pub fn predict(&self, features: &Array1<G>) -> R {
         let mut results: Vec<R> = Vec::with_capacity(self.amount_trees);
         for tree in &self.trees {
             results.push(tree.predict(features))
