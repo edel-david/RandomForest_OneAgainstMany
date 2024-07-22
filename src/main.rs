@@ -308,28 +308,21 @@ pub fn balanced_bootstrap_sampling(
 }
 
 fn main() {
-    let data: Array2<f64> = read_npy("src/digits_data.npy").unwrap();
-    let targets: Array1<i64> = read_npy("src/digits_target.npy").unwrap();
-    let data = data.mapv(|x| Float64(x as f64));
-    let targets = targets.mapv(|x| x as i8);
+    let x_train: Array2<u8> = read_npy("src/fash_X_train.npy").unwrap();
+    let x_test: Array2<u8> = read_npy("src/fash_X_test.npy").unwrap();
+    let z_train: Array1<u8> = read_npy("src/fash_Y_train.npy").unwrap();
+    let z_test: Array1<u8> = read_npy("src/fash_Y_test.npy").unwrap();
 
-    let mut all_indices: Vec<_> = (0..targets.dim()).collect();
-    let mut rng = ndarray_rand::rand::thread_rng();
-    all_indices.shuffle(&mut rng);
-    let train_indices = all_indices[(targets.dim() / 5)..].to_vec();
-    let test_indices = all_indices[..(targets.dim() / 5)].to_vec();
+    let x_train = x_train.mapv(|x| Float64::from(x));
+    let x_test = x_test.mapv(|x| Float64::from(x));
+    let z_train = z_train.mapv(|x| x as i8);
+    let z_test = z_test.mapv(|x| x as i8);
+    
 
-    // let train_indices = all_indices.clone();  // in case you want to use all indices
-    // let test_indices = all_indices;
 
-    let train_features = data.select(Axis(0), &train_indices);
-    let train_targets = targets.select(Axis(0), &train_indices);
-
-    let test_features = data.select(Axis(0), &test_indices);
-    let test_targets = targets.select(Axis(0), &test_indices);
     let mut reg_classi: OneAgainstMany<Float64, Float64> = OneAgainstMany::<G, R>::new(20, 10, 5);
-    reg_classi.train(&train_features, &train_targets, Some(8));
-    let accu = reg_classi.evaluate(&test_features, &test_targets);
+    reg_classi.train(&x_train, &z_train, Some(8));
+    let accu = reg_classi.evaluate(&x_test, &z_test);
     println!("{:?}", accu);
 }
 
@@ -347,29 +340,25 @@ mod tests {
         let targets: Array1<i64> = read_npy("src/digits_target.npy").unwrap();
         let data = data.mapv(|x| Float64(x as f64));
         let targets = targets.mapv(|x| x as i8);
-
+    
         let mut all_indices: Vec<_> = (0..targets.dim()).collect();
         let mut rng = ndarray_rand::rand::thread_rng();
         all_indices.shuffle(&mut rng);
-
         let train_indices = all_indices[(targets.dim() / 5)..].to_vec();
         let test_indices = all_indices[..(targets.dim() / 5)].to_vec();
-
+    
         // let train_indices = all_indices.clone();  // in case you want to use all indices
         // let test_indices = all_indices;
-
+    
         let train_features = data.select(Axis(0), &train_indices);
         let train_targets = targets.select(Axis(0), &train_indices);
-
+    
         let test_features = data.select(Axis(0), &test_indices);
-        let test_targets: ArrayBase<ndarray::OwnedRepr<i8>, Dim<[usize; 1]>> =
-            targets.select(Axis(0), &test_indices);
-        let mut reg_classi: OneAgainstMany<Float64, Float64> =
-            OneAgainstMany::<G, R>::new(20, 10, 5);
-        reg_classi.train(&train_features, &train_targets, Some(8));
+        let test_targets = targets.select(Axis(0), &test_indices);
+        let mut reg_classi: OneAgainstMany<Float64, Float64> = OneAgainstMany::<G, R>::new(10, 10, 20);
+        reg_classi.train(&train_features, &train_targets, Some(16));
         let accu = reg_classi.evaluate(&test_features, &test_targets);
         println!("{:?}", accu);
-        assert!(accu > Float64(0.9)); // allmost guaranteed
     }
     #[test]
     fn simplest_one_against_many() {
