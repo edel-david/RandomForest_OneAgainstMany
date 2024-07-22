@@ -384,6 +384,11 @@ mod tests {
 
         tree.train(&data, &target, None);
         let val = tree.evaluate(&data, &target);
+        let val = tree.evaluate(&data, &target);
+        let val = tree.evaluate(&data, &target);
+        let val = tree.evaluate(&data, &target);
+        let val = tree.evaluate(&data, &target);
+        let val = tree.evaluate(&data, &target);
         println!("Correct percentage: {:?}", val);
     }
 }

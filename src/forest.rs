@@ -121,7 +121,7 @@ where
     }
 }
 
-fn bootstrap_sampling(n: usize) -> Vec<usize> {
+pub fn bootstrap_sampling(n: usize) -> Vec<usize> {
     let mut rng = thread_rng();
     let indices: Vec<usize> = (0..n).map(|_| rng.gen_range(0..n)).collect();
     return indices;

@@ -1,2 +1,5 @@
 /target
 src/*.db
+*.svg
+*.data
+*.data.old

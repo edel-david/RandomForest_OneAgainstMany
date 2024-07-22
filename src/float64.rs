@@ -32,6 +32,11 @@ impl Into<i32> for Float64 {
         self.0 as i32
     }
 }
+impl From<i8> for Float64 {
+    fn from(value: i8) -> Self {
+        Self(value as f64)
+    }
+}
 
 impl Signed for Float64 {
     fn abs(&self) -> Self {
