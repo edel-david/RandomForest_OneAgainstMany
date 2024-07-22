@@ -4,3 +4,4 @@ src/*.db
 *.data
 *.data.old
 secret
+/**/*.npy
