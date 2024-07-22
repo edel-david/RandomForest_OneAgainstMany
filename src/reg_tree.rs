@@ -1,12 +1,17 @@
-use std::{collections::HashSet, f64::INFINITY, iter::zip, ops::Add};
+use std::{
+    collections::HashSet,
+    f64::INFINITY,
+    iter::zip,
+    ops::{Add, Div},
+};
 
-use crate::node::Node;
+use crate::{float64::Float64, node::Node};
 use conv::ValueFrom;
 use core::hash::Hash;
-use ndarray::{prelude::*, ScalarOperand, ViewRepr};
-use num::{Float, FromPrimitive, Signed};
+use ndarray::prelude::*;
+use num::{integer::Roots, Float, FromPrimitive, Signed};
 use rand::seq::SliceRandom;
-use std::fmt::{Debug, Error};
+use std::fmt::Debug;
 #[derive(Debug)]
 pub struct RegressionTree<G: Clone, R>
 where
@@ -15,7 +20,6 @@ where
 {
     pub root: Option<Box<Node<R, G>>>,
     pub n_min: usize,
-    pub d_try: usize, //input_data: PhantomData<G>,
 }
 
 impl<'a, G: Clone + std::cmp::PartialOrd, R> RegressionTree<G, R>
@@ -34,7 +38,8 @@ where
         + ndarray::ScalarOperand
         + std::ops::Add<Output = G>
         + core::ops::Add
-        + Copy,
+        + Copy
+        + Into<usize>,
     R: Clone
         + num::Zero
         + From<f64>
@@ -112,19 +117,19 @@ where
     ) -> G {
         //let arr = Array1::from(features[0].clone());
 
-        let temp = features.slice(s![.., j]);
+        let values_at_j = features.slice(s![.., j]);
 
         let mut left: Vec<G> = vec![];
         let mut right: Vec<G> = vec![];
-        for (x, target) in zip(temp, responses) {
+        for (x, target) in zip(values_at_j, responses) {
             if x <= &t {
                 left.push(target.clone().into())
             } else {
                 right.push(target.clone().into())
             }
         }
-        let amount_left = (left.len());
-        let amount_right = (right.len());
+        let amount_left = left.len();
+        let amount_right = right.len();
         if (amount_left < self.n_min) | (amount_right < self.n_min) {
             return <G as From<f64>>::from(INFINITY);
         }
@@ -139,21 +144,48 @@ where
     }
 
     /// return a 1-D array with D_try randomly selected indices from 0...(D-1).
-    fn select_active_indices(D: usize, d_try: usize) -> Vec<usize> {
+    fn select_active_indices(d: usize, d_try: usize) -> Vec<usize> {
         let mut rng = ndarray_rand::rand::thread_rng();
-        let mut myvec: Vec<usize> = (0..D).collect();
+        let mut myvec: Vec<usize> = (0..d).collect();
         myvec.shuffle(&mut rng);
         myvec[..d_try].to_vec()
     }
-    fn find_threasholds<T>(
-        &self,
-        features: &Array2<G>,
-        responses: &Array1<T>,
-        j: usize,
-    ) -> Array1<G> {
+    fn find_threasholds_new(&self, features: &Array2<G>, j: usize) -> Array1<G> {
+        // it seams this is very slow, likely because of all these intos, so if we
+        // have usize features, it would be way better.
+
         // return: a 1-D array with all possible thresholds along feature j
         //(find midpoints between instances of feature j)
-        let mut feature_slice = features.select(Axis(1), &[j]);
+
+        // assume there are only a few different thresholds (0 to 16 in this example, would make sense to generalize)
+
+        let feature_slice = features.select(Axis(1), &[j]);
+        let mut found = [0; 17];
+        for e in feature_slice {
+            found[e.into()] = 1;
+        }
+        let mut unique_feature_array = Array1::from_iter(
+            found
+                .iter()
+                .enumerate()
+                .map(|(index, binary_found)| index * binary_found),
+        );
+        let temp2 = unique_feature_array.clone().select(
+            Axis(0),
+            Vec::from_iter(1..(unique_feature_array.dim())).as_slice(),
+        );
+        let mut new = unique_feature_array
+            .slice_mut(s![..unique_feature_array.len() - 1])
+            .add(temp2);
+        let new = new.mapv(|x| x.into());
+        let new = new / <G as From<u8>>::from(2);
+
+        return new;
+    }
+    fn find_threasholds(&self, features: &Array2<G>, j: usize) -> Array1<G> {
+        // return: a 1-D array with all possible thresholds along feature j
+        //(find midpoints between instances of feature j)
+        let feature_slice = features.select(Axis(1), &[j]);
         let unique_feature: HashSet<_> = feature_slice.iter().cloned().collect();
         let mut unique_feature_array = Array1::from_iter(unique_feature);
         unique_feature_array
@@ -164,7 +196,7 @@ where
             Axis(0),
             Vec::from_iter(1..(unique_feature_array.dim())).as_slice(),
         );
-        let mut new = unique_feature_array
+        let new = unique_feature_array
             .slice_mut(s![..unique_feature_array.len() - 1])
             .add(temp2);
 
@@ -176,18 +208,16 @@ where
         &self,
         features: &Array2<G>,
         responses: &Array1<T>,
+        d_try: usize,
     ) -> Node<R, G> {
         #[allow(non_snake_case)] // to allow mathematical notation
-        let N = features.dim().0;
-        #[allow(non_snake_case)]
         let D = features.dim().1;
         let mut l_min = <G as From<f64>>::from(INFINITY);
         let mut j_min = 0;
         let mut t_min = <G as From<f64>>::from(0_f64);
-        let active_indices = RegressionTree::<G, R>::select_active_indices(D, self.d_try);
+        let active_indices = RegressionTree::<G, R>::select_active_indices(D, d_try);
         for j in active_indices {
-            let threasholds =
-                RegressionTree::<G, R>::find_threasholds(&self, &features, responses, j);
+            let threasholds = RegressionTree::<G, R>::find_threasholds(&self, &features, j);
             for threashold in threasholds {
                 let loss = RegressionTree::<G, R>::compute_loss_for_split(
                     self, features, responses, j, threashold,
@@ -229,8 +259,8 @@ where
             let right_feat = Array2::from_shape_vec((right_res.len(), D), right_feat).unwrap();
             let left_res = Array1::from_vec(left_res);
             let right_res = Array1::from_vec(right_res);
-            let left = Self::create_correct_node(&self, &left_feat, &left_res);
-            let right = Self::create_correct_node(&self, &right_feat, &right_res);
+            let left = Self::create_correct_node(&self, &left_feat, &left_res, d_try);
+            let right = Self::create_correct_node(&self, &right_feat, &right_res, d_try);
             return Node::SplitNode::<R, G> {
                 left: Some(Box::new(left)),
                 right: Some(Box::new(right)),
@@ -238,8 +268,6 @@ where
                 threashold: t_min,
             };
         }
-
-        todo!()
     }
     pub fn train<T: Clone + Into<G> + Into<R> + num::Zero + Debug>(
         &mut self,
@@ -248,24 +276,15 @@ where
         d_try: Option<usize>,
     ) -> Result<String, String> {
         #[allow(non_snake_case)] // to allow mathematical notation
-        let N = features.dim().0;
-        #[allow(non_snake_case)]
         let D = features.dim().1;
-        let d_try = d_try.unwrap_or(self.d_try);
-
-        //let working_node = &mut self.root;
-
+        let d_try = d_try.unwrap_or_else(|| features.dim().1.sqrt());
         let mut l_min = <G as From<f64>>::from(INFINITY);
         let mut j_min = 0;
         let mut t_min = <G as From<f64>>::from(0_f64);
 
-        l_min = <G as From<f64>>::from(INFINITY);
-        j_min = 0;
-        t_min = <G as From<f64>>::from(0_f64);
         let active_indices = RegressionTree::<G, R>::select_active_indices(D, d_try);
         for j in active_indices {
-            let threasholds =
-                RegressionTree::<G, R>::find_threasholds(&self, &features, responses, j);
+            let threasholds = RegressionTree::<G, R>::find_threasholds(&self, &features, j);
             for threashold in threasholds {
                 let loss = RegressionTree::<G, R>::compute_loss_for_split(
                     self, features, responses, j, threashold,
@@ -277,7 +296,7 @@ where
                 }
             }
         }
-        let node = if (l_min == <G as From<f64>>::from(INFINITY)) {
+        let node = if l_min == <G as From<f64>>::from(INFINITY) {
             // we did not find a threshold, so this should become a leaf node
             // append leaf node
             //root
@@ -319,8 +338,8 @@ where
             let left_res = Array1::from_vec(left_res);
             let right_res = Array1::from_vec(right_res);
 
-            let left = Self::create_correct_node(&self, &left_feat, &left_res);
-            let right = Self::create_correct_node(&self, &right_feat, &right_res);
+            let left = Self::create_correct_node(&self, &left_feat, &left_res, d_try);
+            let right = Self::create_correct_node(&self, &right_feat, &right_res, d_try);
 
             Node::SplitNode::<R, G> {
                 left: Some(Box::new(left)),
@@ -331,7 +350,19 @@ where
         };
         self.root = Some(Box::new(node));
         return Ok(String::from("sucess"));
-        todo!()
+    }
+}
+
+impl Div<Float64> for usize {
+    type Output = Float64;
+    fn div(self, rhs: Float64) -> Self::Output {
+        <usize as Into<Float64>>::into(self) / rhs
+    }
+}
+
+impl Into<usize> for Float64 {
+    fn into(self) -> usize {
+        self.0 as usize
     }
 }
 
@@ -347,7 +378,6 @@ mod tests {
     #[test]
     fn easiest_test() {
         type G = Float64;
-        type T = i64;
         type R = Float64;
         let data = array![[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]];
         let data = data.mapv(|x| Float64(x as f64));
@@ -356,9 +386,8 @@ mod tests {
         let mut tree: RegressionTree<G, R> = RegressionTree {
             root: None,
             n_min: 2,
-            d_try: 2,
         };
-        tree.train(&data, &target, None); // use full data to train => 100% correct
+        let _ = tree.train(&data, &target, Some(2)); // use full data to train => 100% correct
         let preds = tree.predict_batch(&data);
         let preds_cast: Array1<i32> = preds.mapv(|x| x.signum().into());
         assert_eq!(preds_cast, target);
@@ -367,27 +396,21 @@ mod tests {
     #[test]
     fn test() {
         type G = Float64;
-        type T = i64;
         type R = Float64;
 
         let data: Array2<f64> =
             read_npy("src/three_9_data.npy").expect("file should be present and correct");
         let data = data.mapv(|x| Float64(x as f64));
+
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file should be present and correct");
 
         let mut tree: RegressionTree<G, R> = RegressionTree {
             root: None,
             n_min: 5,
-            d_try: 8,
         };
 
-        tree.train(&data, &target, None);
-        let val = tree.evaluate(&data, &target);
-        let val = tree.evaluate(&data, &target);
-        let val = tree.evaluate(&data, &target);
-        let val = tree.evaluate(&data, &target);
-        let val = tree.evaluate(&data, &target);
+        let _ = tree.train(&data, &target, Some(8));
         let val = tree.evaluate(&data, &target);
         println!("Correct percentage: {:?}", val);
     }

@@ -1,25 +1,17 @@
-#[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
-pub struct Float64(pub f64);
-
-
 use core::hash::Hash;
 use core::ops::Add;
+use ndarray::ScalarOperand;
+use num::{Float, FromPrimitive, NumCast, One, Signed, ToPrimitive, Zero};
 use std::cmp::Ordering;
 use std::fmt::Error;
 use std::hash::Hasher;
 use std::ops::{Div, Mul, Neg, Rem, Sub};
 use std::str::FromStr;
 use std::usize;
-//use core::slice::SlicePattern;
-use conv::prelude::*;
-use ndarray::{prelude::*, ScalarOperand, ViewRepr};
-use ndarray_npy::{read_npy, ReadableElement};
-use num::traits::real::Real;
-use num::{Float, FromPrimitive, NumCast, One, Signed, ToPrimitive, Zero};
-use rand::seq::SliceRandom;
-use std::collections::HashSet;
-use std::{collections::HashMap, hash};
-use std::{f64::INFINITY, marker::PhantomData};
+
+#[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
+pub struct Float64(pub f64);
+
 impl conv::ValueFrom<usize> for Float64 {
     type Err = Error;
     fn value_from(src: usize) -> Result<Self, Self::Err> {
@@ -43,7 +35,7 @@ impl Signed for Float64 {
         Self(self.0.abs())
     }
     fn abs_sub(&self, other: &Self) -> Self {
-        Self(self.0.abs_sub(other.0))
+        Self((self.0 - other.0).max(0.0))
     }
     fn is_negative(&self) -> bool {
         self.0.is_sign_negative()
@@ -69,7 +61,7 @@ impl Hash for Float64 {
     }
 }
 
-impl From<usize> for Float64{
+impl From<usize> for Float64 {
     fn from(value: usize) -> Self {
         Self(value as f64)
     }
@@ -300,7 +292,7 @@ impl Float for Float64 {
     }
 
     fn abs_sub(self, other: Self) -> Self {
-        Float64(self.0.abs_sub(other.0))
+        Self((self.0 - other.0).abs())
     }
 
     fn cbrt(self) -> Self {

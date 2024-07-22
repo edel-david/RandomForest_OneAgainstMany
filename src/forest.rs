@@ -1,4 +1,4 @@
-use crate::float64::Float64;
+#![allow(unused)]
 use crate::reg_tree::RegressionTree;
 use conv::ValueFrom;
 use core::hash::Hash;
@@ -11,7 +11,6 @@ use std::iter::zip;
 use std::ops::Add;
 
 // type G = Float64; // G is type of feature data Vec<>
-// type T = i64; // T is the type of the response values
 // type R = Float64; // R is the predict return Type
 
 pub struct Forest<G, R>
@@ -41,7 +40,8 @@ where
         + ndarray::ScalarOperand
         + std::ops::Add<Output = G>
         + core::ops::Add
-        + Copy,
+        + Copy
+        +Into<usize>,
     R: Clone
         + num::Zero
         + From<f64>
@@ -80,20 +80,19 @@ where
         return results;
     }
 
-    pub fn new(amount_trees: usize, n_min: usize, D_try: usize) -> Self {
+    pub fn new(amount_trees: usize, n_min: usize, d_try: usize) -> Self {
         //let mut trees = Vec::with_capacity(amount_trees);
         let trees = (0..amount_trees)
             .map(|_| RegressionTree {
                 root: None,
-                n_min,
-                d_try: D_try,
+                n_min
             })
             .collect();
         Self {
             amount_trees,
             trees,
             n_min,
-            dtry: Some(D_try),
+            dtry: Some(d_try),
         }
     }
 
@@ -138,7 +137,6 @@ mod tests {
     #[test]
     fn easiest_test() {
         type G = Float64;
-        type T = i64;
         type R = Float64;
 
         let data: Array2<f64> =
@@ -155,7 +153,6 @@ mod tests {
     #[test]
     fn test_untrained() {
         type G = Float64;
-        type T = i64;
         type R = Float64;
 
         let data: Array2<f64> =
@@ -178,7 +175,7 @@ mod tests {
         let test_set_resp = target.select(Axis(0), &test_indices);
 
         let mut forest = Forest::<G, R>::new(20, 10, 8);
-        forest.train(&test_set_feat,&test_set_resp);
+        forest.train(&ts,&ts_target);
         let perf = forest.evaluate(&test_set_feat, &test_set_resp);
         dbg!(perf);
     }
