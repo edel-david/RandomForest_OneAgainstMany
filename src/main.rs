@@ -94,7 +94,7 @@ where
         return results;
     }
 
-    pub fn new(class: usize, amount_trees: usize, n_min: usize) -> Self {
+    pub fn new(amount_trees: usize, n_min: usize) -> Self {
         //let mut trees = Vec::with_capacity(amount_trees);
         let trees = (0..amount_trees)
             .map(|_| RegressionTree { root: None, n_min })
@@ -119,12 +119,14 @@ where
             // now do balanced_bootstrap_sampling with the indices;
             //            let voter_indidces = Array1::from_vec(voter_indices);
             //let other_indices = Array1::from_vec(other_indices);
-            let (mut rand_sampl_votes, rand_sampl_other) =
-                balanced_bootstrap_sampling(n, voter_indices, other_indices);
+            // let (mut rand_sampl_votes, rand_sampl_other) =
+            //     balanced_bootstrap_sampling(n, voter_indices, other_indices);
 
-            rand_sampl_votes.extend(rand_sampl_other);
-            let to_train = features.select(Axis(0), &rand_sampl_votes);
-            let to_train_resp = responses.select(Axis(0), &rand_sampl_votes);
+            // rand_sampl_votes.extend(rand_sampl_other);
+
+            let rand_samples = balanced_bootstrap_sampling(n, voter_indices, other_indices);
+            let to_train = features.select(Axis(0), &rand_samples);
+            let to_train_resp = responses.select(Axis(0), &rand_samples);
             let _ = tree.train(&to_train, &to_train_resp, Some(dtry));
         }
     }
@@ -219,7 +221,7 @@ where
 
     pub fn new(amount_trees: usize, amount_classes: usize, n_min: usize) -> Self {
         let forests: Vec<_> = (0..amount_classes)
-            .map(|index| VoterForest::<G, R>::new(index, amount_trees, n_min))
+            .map(|_| VoterForest::<G, R>::new(amount_trees, n_min))
             .collect();
         Self {
             amount_classes,
@@ -270,16 +272,25 @@ pub fn balanced_bootstrap_sampling(
     n: usize,
     voter_indices: &Vec<usize>,
     other_indices: &Vec<usize>,
-) -> (Vec<usize>, Vec<usize>) {
-    let half_amount = n / 2; // dont care what this rounds to
+) -> Vec<usize>{
+    let half_amount = n / 2; // dont care what this rounds to 
     let mut rng = thread_rng();
-    let random_samples_votes: Vec<usize> = (0..half_amount)
-        .map(|_| voter_indices[rng.gen_range(0..voter_indices.len())])
-        .collect();
-    let random_samples_other: Vec<usize> = (0..half_amount)
-        .map(|_| other_indices[rng.gen_range(0..other_indices.len())])
-        .collect();
-    return (random_samples_votes, random_samples_other);
+    
+    let mut random_samples = Vec::with_capacity(n);
+    random_samples.extend((0..half_amount)
+    .map(|_| voter_indices[rng.gen_range(0..voter_indices.len())]));
+    random_samples.extend((0..half_amount)
+    .map(|_| other_indices[rng.gen_range(0..other_indices.len())]));
+
+    
+    // let random_samples_votes: Vec<usize> = (0..half_amount)
+    //     .map(|_| voter_indices[rng.gen_range(0..voter_indices.len())])
+    //     .collect();
+    // let random_samples_other: Vec<usize> = (0..half_amount)
+    //     .map(|_| other_indices[rng.gen_range(0..other_indices.len())])
+    //     .collect();
+    // return (random_samples_votes, random_samples_other);
+    return random_samples;
 }
 
 fn main() {

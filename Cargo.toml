@@ -7,7 +7,7 @@ edition = "2021"
 
 
 [profile.release]
-debug = false
+debug = true
 
 [dependencies]
 ndarray = "0.15.6"
