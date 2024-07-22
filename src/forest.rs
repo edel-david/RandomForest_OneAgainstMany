@@ -41,7 +41,7 @@ where
         + std::ops::Add<Output = G>
         + core::ops::Add
         + Copy
-        +Into<usize>,
+        +Into<usize>+Send+Sync,
     R: Clone
         + num::Zero
         + From<f64>
@@ -50,7 +50,7 @@ where
         + std::ops::Sub<Output = R>
         + std::cmp::PartialOrd
         + Signed
-        + FromPrimitive,
+        + FromPrimitive+Send+Sync,
 {
 
     pub fn evaluate<T: Copy + Clone + Into<G> + Into<R> + Debug>(
@@ -96,7 +96,7 @@ where
         }
     }
 
-    pub fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug>(
+    pub fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug+Send+Sync>(
         &mut self,
         features: &Array2<G>,
         responses: &Array1<T>,

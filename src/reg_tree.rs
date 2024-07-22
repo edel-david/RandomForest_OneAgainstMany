@@ -39,7 +39,8 @@ where
         + std::ops::Add<Output = G>
         + core::ops::Add
         + Copy
-        + Into<usize>,
+        + Into<usize>
+        +Send+Sync,
     R: Clone
         + num::Zero
         + From<f64>
@@ -47,7 +48,7 @@ where
         + std::ops::Div<Output = R>
         + std::ops::Sub<Output = R>
         + std::cmp::PartialOrd
-        + Signed,
+        + Signed+Send+Sync,
 {
     pub fn evaluate<T: Copy + Clone + Into<G> + Into<R> + Debug>(
         &self,
@@ -174,7 +175,7 @@ where
             Axis(0),
             Vec::from_iter(1..(unique_feature_array.dim())).as_slice(),
         );
-        let mut new = unique_feature_array
+        let new = unique_feature_array
             .slice_mut(s![..unique_feature_array.len() - 1])
             .add(temp2);
         let new = new.mapv(|x| x.into());
@@ -204,7 +205,7 @@ where
 
         return new;
     }
-    pub fn create_correct_node<T: Clone + Into<G> + Into<R> + num::Zero + Debug>(
+    pub fn create_correct_node<T: Clone + Into<G> + Into<R> + num::Zero + Debug+Send+Sync>(
         &self,
         features: &Array2<G>,
         responses: &Array1<T>,
@@ -269,7 +270,7 @@ where
             };
         }
     }
-    pub fn train<T: Clone + Into<G> + Into<R> + num::Zero + Debug>(
+    pub fn train<T: Clone + Into<G> + Into<R> + num::Zero + Debug+Send+Sync>(
         &mut self,
         features: &Array2<G>,
         responses: &Array1<T>,

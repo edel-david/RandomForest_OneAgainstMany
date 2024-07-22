@@ -25,6 +25,8 @@ use rand::seq::SliceRandom;
 
 type R = Float64;
 type G = Float64;
+use rayon::iter::IntoParallelIterator;
+use rayon::prelude::*;
 
 pub struct VoterForest<G, R>
 where
@@ -54,8 +56,7 @@ where
         + core::ops::Add
         + Copy
         + From<i8>
-        +Into<usize>
-        ,
+        + Into<usize>+Send+Sync,
     R: Clone
         + num::Zero
         + From<f64>
@@ -65,7 +66,7 @@ where
         + std::cmp::PartialOrd
         + Signed
         + FromPrimitive
-        + From<i8>,
+        + From<i8>+Send+Sync,
 {
     pub fn evaluate<T: Copy + Clone + Into<G> + Into<R> + Debug>(
         &self,
@@ -105,11 +106,11 @@ where
         }
     }
 
-    pub fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug + From<i8> + Eq>(
+    pub fn train<T: Clone + Into<R> + Into<G> + num::Zero + Debug + From<i8> + Eq+Send+Sync>(
         &mut self,
         features: &Array2<G>,
         responses: &Array1<T>,
-        voter_indices:&Vec<usize>,
+        voter_indices: &Vec<usize>,
         other_indices: &Vec<usize>,
         dtry: Option<usize>,
     ) {
@@ -154,6 +155,7 @@ where
 impl<G, R> OneAgainstMany<G, R>
 where
     G: Add
+    +Send
         + From<usize>
         + Debug
         + ValueFrom<usize>
@@ -169,8 +171,10 @@ where
         + core::ops::Add
         + Copy
         + From<i8>
-        +Into<usize>,
+        + Into<usize>
+        +Sync,
     R: Clone
+    +Send
         + num::Zero
         + From<f64>
         + From<usize>
@@ -180,16 +184,18 @@ where
         + Signed
         + FromPrimitive
         + From<usize>
-        + From<i8>,
+        + From<i8>
+        +Sync,
 {
     pub fn evaluate(&self, data: &Array2<G>, responses: &Array1<i8>) -> G {
         let results = self.predict_batch(data);
-        let sum_correct = results
-            .iter()
-            .zip(responses)
-            .fold(0, |acc: usize, (result, response)| {
-                acc + ((*result ==  response.clone() as usize) as usize)
-            });
+        let sum_correct =
+            results
+                .iter()
+                .zip(responses)
+                .fold(0, |acc: usize, (result, response)| {
+                    acc + ((*result == response.clone() as usize) as usize)
+                });
         dbg!(&sum_correct);
         let sum_correct_g: G = sum_correct.into();
         let len: G = responses.len().into();
@@ -197,11 +203,11 @@ where
         return percentage;
     }
     pub fn predict_batch(&self, features: &Array2<G>) -> Array1<usize> {
-        let mut results = Array1::zeros([features.dim().0]);
-        for (row, e) in zip(features.rows(), 0..) {
-            results[e] = self.predict(&row.to_owned());
-        }
-        return results;
+        let results :Vec<usize>= features.axis_iter(Axis(0)).into_par_iter().map(|x|self.predict(&x.to_owned())).collect();
+        // for (row, e) in zip(features.rows(), 0..) {
+        //     results[e] = self.predict(&row.to_owned());
+        // }
+        return Array1::from(results);
     }
     pub fn predict(&self, features: &Array1<G>) -> usize {
         let results = self.predict_stoch(features);
@@ -231,9 +237,7 @@ where
         }
     }
 
-    pub fn train<
-        T: Into<i8> + Clone + Into<R> + Into<G> + num::Zero + Debug + Eq,
-    >(
+    pub fn train<T: Into<i8> + Clone + Into<R> + Into<G> + num::Zero + Debug + Eq>(
         &mut self,
         features: &Array2<G>,
         responses: &Array1<T>,
@@ -241,30 +245,41 @@ where
     ) {
         let responses: ArrayBase<ndarray::OwnedRepr<i8>, Dim<[usize; 1]>> =
             responses.mapv(|x| x.into());
-        for (index_forest, class_forest) in (self.forests).iter_mut().enumerate() {
-            // train forest
-            // prepare training features and responses
-            // the features and responses both should be 50% of the voter class and 50% everyting else
-            // we need to change our responses to -1 and 1.
-            let mut responses_class = responses.clone();
-            let mut voter_indices = vec![];
-            let mut other_indices = vec![];
+        // try to train all Voter-Forests in parallel
 
-            //let indices_voter_index
 
-            for (index_response, resp) in responses_class.iter_mut().enumerate() {
-                if *resp == index_forest as i8 {
+        (self.forests)
+            .par_iter_mut()
+            .enumerate()
+            .for_each(|(index_forest, class_forest)| {
+                // train forest
+                // prepare training features and responses
+                // the features and responses both should be 50% of the voter class and 50% everyting else
+                // we need to change our responses to -1 and 1.
+                let mut responses_class = responses.clone();
+                let mut voter_indices = vec![];
+                let mut other_indices = vec![];
 
-                    voter_indices.push(index_response);
-                    *resp = 1;
-                } else {
-                    other_indices.push(index_response);
-                    *resp = -1;
+                //let indices_voter_index
+
+                for (index_response, resp) in responses_class.iter_mut().enumerate() {
+                    if *resp == index_forest as i8 {
+                        voter_indices.push(index_response);
+                        *resp = 1;
+                    } else {
+                        other_indices.push(index_response);
+                        *resp = -1;
+                    }
                 }
-            }
 
-            class_forest.train(features, &responses_class,&voter_indices,&other_indices, dtry);
-        }
+                class_forest.train(
+                    &features.clone(),
+                    &responses_class,
+                    &voter_indices,
+                    &other_indices,
+                    dtry,
+                );
+            });
     }
 }
 
@@ -272,17 +287,16 @@ pub fn balanced_bootstrap_sampling(
     n: usize,
     voter_indices: &Vec<usize>,
     other_indices: &Vec<usize>,
-) -> Vec<usize>{
-    let half_amount = n / 2; // dont care what this rounds to 
+) -> Vec<usize> {
+    let half_amount = n / 2; // dont care what this rounds to
     let mut rng = thread_rng();
-    
-    let mut random_samples = Vec::with_capacity(n);
-    random_samples.extend((0..half_amount)
-    .map(|_| voter_indices[rng.gen_range(0..voter_indices.len())]));
-    random_samples.extend((0..half_amount)
-    .map(|_| other_indices[rng.gen_range(0..other_indices.len())]));
 
-    
+    let mut random_samples = Vec::with_capacity(n);
+    random_samples
+        .extend((0..half_amount).map(|_| voter_indices[rng.gen_range(0..voter_indices.len())]));
+    random_samples
+        .extend((0..half_amount).map(|_| other_indices[rng.gen_range(0..other_indices.len())]));
+
     // let random_samples_votes: Vec<usize> = (0..half_amount)
     //     .map(|_| voter_indices[rng.gen_range(0..voter_indices.len())])
     //     .collect();
@@ -302,7 +316,6 @@ fn main() {
     let mut all_indices: Vec<_> = (0..targets.dim()).collect();
     let mut rng = ndarray_rand::rand::thread_rng();
     all_indices.shuffle(&mut rng);
-    dbg!(targets.len());
     let train_indices = all_indices[(targets.dim() / 5)..].to_vec();
     let test_indices = all_indices[..(targets.dim() / 5)].to_vec();
 
@@ -349,7 +362,8 @@ mod tests {
         let train_targets = targets.select(Axis(0), &train_indices);
 
         let test_features = data.select(Axis(0), &test_indices);
-        let test_targets: ArrayBase<ndarray::OwnedRepr<i8>, Dim<[usize; 1]>> = targets.select(Axis(0), &test_indices);
+        let test_targets: ArrayBase<ndarray::OwnedRepr<i8>, Dim<[usize; 1]>> =
+            targets.select(Axis(0), &test_indices);
         let mut reg_classi: OneAgainstMany<Float64, Float64> =
             OneAgainstMany::<G, R>::new(20, 10, 5);
         reg_classi.train(&train_features, &train_targets, Some(8));

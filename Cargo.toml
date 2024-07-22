@@ -7,13 +7,17 @@ edition = "2021"
 
 
 [profile.release]
-debug = true
+debug = false
+codegen-units = 1
+lto = "fat"
+
 
 [dependencies]
-ndarray = "0.15.6"
+ndarray = { version = "0.15.6", features = ["rayon"] }
 ndarray-rand = "0.14.0"
 ndarray-stats = "0.5.1"
 rand = "0.8.5"
 ndarray-npy = "0.8.1"
 num = "0.4.3"
 conv = "0.3.3"
+rayon = "1.10.0"
