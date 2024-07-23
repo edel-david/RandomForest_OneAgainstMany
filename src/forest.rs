@@ -15,7 +15,7 @@ use std::ops::Add;
 
 pub struct Forest<G, R>
 where
-    G: From<f64> + FromPrimitive + Float,
+    G: From<f32> + FromPrimitive + Float,
     R: Clone + num::Zero,
 {
     amount_trees: usize,
@@ -30,7 +30,7 @@ where
         + From<usize>
         + Debug
         + ValueFrom<usize>
-        + From<f64>
+        + From<f32>
         + Hash
         + FromPrimitive
         + Float
@@ -44,7 +44,7 @@ where
         +Into<usize>+Send+Sync,
     R: Clone
         + num::Zero
-        + From<f64>
+        + From<f32>
         + From<usize>
         + std::ops::Div<Output = R>
         + std::ops::Sub<Output = R>
@@ -63,7 +63,7 @@ where
             .iter()
             .zip(responses)
             .fold(0, |acc, (result, response)| {
-                acc + ((result.signum() - (*response).into()).abs() < R::from(0.1_f64)) as usize
+                acc + ((result.signum() - (*response).into()).abs() < R::from(0.1_f32)) as usize
             });
 
         let sum_correct_g: G = sum_correct.into();
@@ -139,9 +139,9 @@ mod tests {
         type G = Float64;
         type R = Float64;
 
-        let data: Array2<f64> =
+        let data: Array2<f32> =
             read_npy("src/three_9_data.npy").expect("file should be present and correct");
-        let data = data.mapv(|x| Float64(x as f64));
+        let data = data.mapv(|x| Float64(x as f32));
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file should be present and correct");
 
@@ -155,10 +155,10 @@ mod tests {
         type G = Float64;
         type R = Float64;
 
-        let data: Array2<f64> =
+        let data: Array2<f32> =
             read_npy("src/three_9_data.npy").expect("file is present and correct");
         //let data = array![[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4]];
-        let data = data.mapv(|x| Float64(x as f64));
+        let data = data.mapv(|x| Float64(x as f32));
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file is present and correct");
 

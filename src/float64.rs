@@ -10,12 +10,12 @@ use std::str::FromStr;
 use std::usize;
 
 #[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
-pub struct Float64(pub f64);
+pub struct Float64(pub f32);
 
 impl conv::ValueFrom<usize> for Float64 {
     type Err = Error;
     fn value_from(src: usize) -> Result<Self, Self::Err> {
-        Ok(Self(src as f64))
+        Ok(Self(src as f32))
     }
 }
 
@@ -26,7 +26,7 @@ impl Into<i32> for Float64 {
 }
 impl From<i8> for Float64 {
     fn from(value: i8) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
@@ -50,7 +50,7 @@ impl Signed for Float64 {
 
 impl From<i32> for Float64 {
     fn from(value: i32) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
@@ -63,13 +63,13 @@ impl Hash for Float64 {
 
 impl From<usize> for Float64 {
     fn from(value: usize) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
 impl From<i64> for Float64 {
     fn from(value: i64) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
@@ -130,37 +130,37 @@ impl Rem for Float64 {
 }
 
 impl FromStr for Float64 {
-    type Err = <f64 as FromStr>::Err;
+    type Err = <f32 as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse::<f64>().map(Float64)
+        s.parse::<f32>().map(Float64)
     }
 }
 
 impl num::Num for Float64 {
-    type FromStrRadixErr = <f64 as num::Num>::FromStrRadixErr;
+    type FromStrRadixErr = <f32 as num::Num>::FromStrRadixErr;
 
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
-        f64::from_str_radix(str, radix).map(Float64)
+        f32::from_str_radix(str, radix).map(Float64)
     }
 }
 impl NumCast for Float64 {
     fn from<T: ToPrimitive>(n: T) -> Option<Self> {
-        n.to_f64().map(Float64)
+        n.to_f32().map(Float64)
     }
 }
 
 impl Float for Float64 {
     fn nan() -> Self {
-        Float64(f64::NAN)
+        Float64(f32::NAN)
     }
 
     fn infinity() -> Self {
-        Float64(f64::INFINITY)
+        Float64(f32::INFINITY)
     }
 
     fn neg_infinity() -> Self {
-        Float64(f64::NEG_INFINITY)
+        Float64(f32::NEG_INFINITY)
     }
 
     fn neg_zero() -> Self {
@@ -168,19 +168,19 @@ impl Float for Float64 {
     }
 
     fn min_value() -> Self {
-        Float64(f64::MIN)
+        Float64(f32::MIN)
     }
 
     fn min_positive_value() -> Self {
-        Float64(f64::MIN_POSITIVE)
+        Float64(f32::MIN_POSITIVE)
     }
 
     fn epsilon() -> Self {
-        Float64(f64::EPSILON)
+        Float64(f32::EPSILON)
     }
 
     fn max_value() -> Self {
-        Float64(f64::MAX)
+        Float64(f32::MAX)
     }
 
     fn classify(self) -> std::num::FpCategory {
@@ -396,54 +396,54 @@ impl Ord for Float64 {
         }
     }
 }
-impl From<f64> for Float64 {
-    fn from(value: f64) -> Self {
+impl From<f32> for Float64 {
+    fn from(value: f32) -> Self {
         Self(value)
     }
 }
 impl FromPrimitive for Float64 {
     fn from_i64(n: i64) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_u64(n: u64) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
-    fn from_f64(n: f64) -> Option<Self> {
+    fn from_f32(n: f32) -> Option<Self> {
         Some(Float64(n))
     }
 
     fn from_isize(n: isize) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_i8(n: i8) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_i16(n: i16) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_i32(n: i32) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_usize(n: usize) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_u8(n: u8) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_u16(n: u16) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 
     fn from_u32(n: u32) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float64(n as f32))
     }
 }
 
@@ -456,7 +456,7 @@ impl ToPrimitive for Float64 {
         Some(self.0 as u64)
     }
 
-    fn to_f64(&self) -> Option<f64> {
+    fn to_f32(&self) -> Option<f32> {
         Some(self.0)
     }
 
@@ -494,6 +494,6 @@ impl ToPrimitive for Float64 {
 }
 impl From<u8> for Float64 {
     fn from(value: u8) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }

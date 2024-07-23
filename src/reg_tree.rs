@@ -1,6 +1,6 @@
 use std::{
     collections::HashSet,
-    f64::INFINITY,
+    f32::INFINITY,
     iter::zip,
     ops::{Add, Div},
 };
@@ -15,7 +15,7 @@ use std::fmt::Debug;
 #[derive(Debug)]
 pub struct RegressionTree<G: Clone, R>
 where
-    G: From<f64> + FromPrimitive + Float, //From<usize>,
+    G: From<f32> + FromPrimitive + Float, //From<usize>,
     R: Clone + num::Zero,
 {
     pub root: Option<Box<Node<R, G>>>,
@@ -28,7 +28,7 @@ where
         + From<usize>
         + Debug
         + ValueFrom<usize>
-        + From<f64>
+        + From<f32>
         + Hash
         + FromPrimitive
         + Float
@@ -43,7 +43,7 @@ where
         +Send+Sync,
     R: Clone
         + num::Zero
-        + From<f64>
+        + From<f32>
         + From<usize>
         + std::ops::Div<Output = R>
         + std::ops::Sub<Output = R>
@@ -60,7 +60,7 @@ where
             .iter()
             .zip(responses)
             .fold(0, |acc, (result, response)| {
-                acc + ((result.signum() - (*response).into()).abs() < R::from(0.1_f64)) as usize
+                acc + ((result.signum() - (*response).into()).abs() < R::from(0.1_f32)) as usize
             });
 
         let sum_correct_g: G = sum_correct.into();
@@ -79,7 +79,7 @@ where
 
     pub fn predict(&self, x: &Array1<G>) -> R {
         let mut node = &(self.root);
-        for _i in 0..100 {
+        for _i in 0..200 {
             match node.as_ref() {
                 Some(val) => match val.as_ref() {
                     Node::LeafNode { prediction } => {
@@ -99,7 +99,7 @@ where
                     }
                 },
                 None => {
-                    return R::from(0_f64); // if not trained yet, return 0 always
+                    return R::from(0_f32); // if not trained yet, return 0 always
                                            // if trained but still reached => bug
                                            // consider logging here, as it does not make sense to use predict before training
                 }
@@ -132,13 +132,13 @@ where
         let amount_left = left.len();
         let amount_right = right.len();
         if (amount_left < self.n_min) | (amount_right < self.n_min) {
-            return <G as From<f64>>::from(INFINITY);
+            return <G as From<f32>>::from(INFINITY);
         }
 
         let left = Array1::from_vec(left);
         let right = Array1::from_vec(right);
 
-        let zero = <G as From<f64>>::from(0_f64);
+        let zero = <G as From<f32>>::from(0_f32);
         let loss = left.var(zero) * G::value_from(amount_left).expect("msg")// into G
             + right.var(zero) * G::value_from(amount_right).expect("msg");
         return loss;
@@ -213,9 +213,9 @@ where
     ) -> Node<R, G> {
         #[allow(non_snake_case)] // to allow mathematical notation
         let D = features.dim().1;
-        let mut l_min = <G as From<f64>>::from(INFINITY);
+        let mut l_min = <G as From<f32>>::from(INFINITY);
         let mut j_min = 0;
-        let mut t_min = <G as From<f64>>::from(0_f64);
+        let mut t_min = <G as From<f32>>::from(0_f32);
         let active_indices = RegressionTree::<G, R>::select_active_indices(D, d_try);
         for j in active_indices {
             let threasholds = RegressionTree::<G, R>::find_threasholds(&self, &features, j);
@@ -230,7 +230,7 @@ where
                 }
             }
         }
-        if l_min == <G as From<f64>>::from(INFINITY) {
+        if l_min == <G as From<f32>>::from(INFINITY) {
             // we did not find a threshold, so this should become a leaf node
             let sum = responses.sum();
             let mut sum_r: R = sum.into();
@@ -279,9 +279,9 @@ where
         #[allow(non_snake_case)] // to allow mathematical notation
         let D = features.dim().1;
         let d_try = d_try.unwrap_or_else(|| features.dim().1.sqrt());
-        let mut l_min = <G as From<f64>>::from(INFINITY);
+        let mut l_min = <G as From<f32>>::from(INFINITY);
         let mut j_min = 0;
-        let mut t_min = <G as From<f64>>::from(0_f64);
+        let mut t_min = <G as From<f32>>::from(0_f32);
 
         let active_indices = RegressionTree::<G, R>::select_active_indices(D, d_try);
         for j in active_indices {
@@ -297,7 +297,7 @@ where
                 }
             }
         }
-        let node = if l_min == <G as From<f64>>::from(INFINITY) {
+        let node = if l_min == <G as From<f32>>::from(INFINITY) {
             // we did not find a threshold, so this should become a leaf node
             // append leaf node
             //root
@@ -381,7 +381,7 @@ mod tests {
         type G = Float64;
         type R = Float64;
         let data = array![[1, 1, 1, 1], [2, 2, 2, 2], [3, 3, 3, 3], [4, 4, 4, 4]];
-        let data = data.mapv(|x| Float64(x as f64));
+        let data = data.mapv(|x| Float64(x as f32));
         let target = array![-1, -1, 1, 1];
 
         let mut tree: RegressionTree<G, R> = RegressionTree {
@@ -399,9 +399,9 @@ mod tests {
         type G = Float64;
         type R = Float64;
 
-        let data: Array2<f64> =
+        let data: Array2<f32> =
             read_npy("src/three_9_data.npy").expect("file should be present and correct");
-        let data = data.mapv(|x| Float64(x as f64));
+        let data = data.mapv(|x| Float64(x as f32));
 
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file should be present and correct");
