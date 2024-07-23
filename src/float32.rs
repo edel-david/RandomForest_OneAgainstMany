@@ -12,27 +12,27 @@ use std::usize;
 /// Note: This file was laregely created by Coding assistants, be cautious
 
 #[derive(Debug, PartialEq, PartialOrd, Copy, Clone)]
-pub struct Float64(pub f64);
+pub struct Float32(pub f32);
 
-impl conv::ValueFrom<usize> for Float64 {
+impl conv::ValueFrom<usize> for Float32 {
     type Err = Error;
     fn value_from(src: usize) -> Result<Self, Self::Err> {
-        Ok(Self(src as f64))
+        Ok(Self(src as f32))
     }
 }
 
-impl Into<i32> for Float64 {
+impl Into<i32> for Float32 {
     fn into(self) -> i32 {
         self.0 as i32
     }
 }
-impl From<i8> for Float64 {
+impl From<i8> for Float32 {
     fn from(value: i8) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
-impl Signed for Float64 {
+impl Signed for Float32 {
     fn abs(&self) -> Self {
         Self(self.0.abs())
     }
@@ -50,62 +50,62 @@ impl Signed for Float64 {
     }
 }
 
-impl From<i32> for Float64 {
+impl From<i32> for Float32 {
     fn from(value: i32) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
-impl ScalarOperand for Float64 {}
-impl Hash for Float64 {
+impl ScalarOperand for Float32 {}
+impl Hash for Float32 {
     fn hash<H: Hasher>(&self, state: &mut H) {
         self.0.to_bits().hash(state);
     }
 }
 
-impl From<usize> for Float64 {
+impl From<usize> for Float32 {
     fn from(value: usize) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
-impl From<i64> for Float64 {
+impl From<i64> for Float32 {
     fn from(value: i64) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }
 
-impl Add for Float64 {
+impl Add for Float32 {
     type Output = Self;
     fn add(self, other: Self) -> Self {
-        Float64(self.0 + other.0)
+        Float32(self.0 + other.0)
     }
 }
 
-impl Sub for Float64 {
+impl Sub for Float32 {
     type Output = Self;
     fn sub(self, other: Self) -> Self {
-        Float64(self.0 - other.0)
+        Float32(self.0 - other.0)
     }
 }
 
-impl Mul for Float64 {
+impl Mul for Float32 {
     type Output = Self;
     fn mul(self, other: Self) -> Self {
-        Float64(self.0 * other.0)
+        Float32(self.0 * other.0)
     }
 }
 
-impl Div for Float64 {
+impl Div for Float32 {
     type Output = Self;
     fn div(self, other: Self) -> Self {
-        Float64(self.0 / other.0)
+        Float32(self.0 / other.0)
     }
 }
 
-impl Zero for Float64 {
+impl Zero for Float32 {
     fn zero() -> Self {
-        Float64(0.0)
+        Float32(0.0)
     }
 
     fn is_zero(&self) -> bool {
@@ -113,76 +113,76 @@ impl Zero for Float64 {
     }
 }
 
-impl One for Float64 {
+impl One for Float32 {
     fn one() -> Self {
-        Float64(1.0)
+        Float32(1.0)
     }
 }
-impl Neg for Float64 {
-    type Output = Float64;
+impl Neg for Float32 {
+    type Output = Float32;
     fn neg(self) -> Self::Output {
-        Float64(self.0.neg())
+        Float32(self.0.neg())
     }
 }
-impl Rem for Float64 {
-    type Output = Float64;
+impl Rem for Float32 {
+    type Output = Float32;
     fn rem(self, rhs: Self) -> Self::Output {
         Self(self.0.rem(rhs.0))
     }
 }
 
-impl FromStr for Float64 {
-    type Err = <f64 as FromStr>::Err;
+impl FromStr for Float32 {
+    type Err = <f32 as FromStr>::Err;
 
     fn from_str(s: &str) -> Result<Self, Self::Err> {
-        s.parse::<f64>().map(Float64)
+        s.parse::<f32>().map(Float32)
     }
 }
 
-impl num::Num for Float64 {
-    type FromStrRadixErr = <f64 as num::Num>::FromStrRadixErr;
+impl num::Num for Float32 {
+    type FromStrRadixErr = <f32 as num::Num>::FromStrRadixErr;
 
     fn from_str_radix(str: &str, radix: u32) -> Result<Self, Self::FromStrRadixErr> {
-        f64::from_str_radix(str, radix).map(Float64)
+        f32::from_str_radix(str, radix).map(Float32)
     }
 }
-impl NumCast for Float64 {
+impl NumCast for Float32 {
     fn from<T: ToPrimitive>(n: T) -> Option<Self> {
-        n.to_f64().map(Float64)
+        n.to_f32().map(Float32)
     }
 }
 
-impl Float for Float64 {
+impl Float for Float32 {
     fn nan() -> Self {
-        Float64(f64::NAN)
+        Float32(f32::NAN)
     }
 
     fn infinity() -> Self {
-        Float64(f64::INFINITY)
+        Float32(f32::INFINITY)
     }
 
     fn neg_infinity() -> Self {
-        Float64(f64::NEG_INFINITY)
+        Float32(f32::NEG_INFINITY)
     }
 
     fn neg_zero() -> Self {
-        Float64(-0.0)
+        Float32(-0.0)
     }
 
     fn min_value() -> Self {
-        Float64(f64::MIN)
+        Float32(f32::MIN)
     }
 
     fn min_positive_value() -> Self {
-        Float64(f64::MIN_POSITIVE)
+        Float32(f32::MIN_POSITIVE)
     }
 
     fn epsilon() -> Self {
-        Float64(f64::EPSILON)
+        Float32(f32::EPSILON)
     }
 
     fn max_value() -> Self {
-        Float64(f64::MAX)
+        Float32(f32::MAX)
     }
 
     fn classify(self) -> std::num::FpCategory {
@@ -206,31 +206,31 @@ impl Float for Float64 {
     }
 
     fn floor(self) -> Self {
-        Float64(self.0.floor())
+        Float32(self.0.floor())
     }
 
     fn ceil(self) -> Self {
-        Float64(self.0.ceil())
+        Float32(self.0.ceil())
     }
 
     fn round(self) -> Self {
-        Float64(self.0.round())
+        Float32(self.0.round())
     }
 
     fn trunc(self) -> Self {
-        Float64(self.0.trunc())
+        Float32(self.0.trunc())
     }
 
     fn fract(self) -> Self {
-        Float64(self.0.fract())
+        Float32(self.0.fract())
     }
 
     fn abs(self) -> Self {
-        Float64(self.0.abs())
+        Float32(self.0.abs())
     }
 
     fn signum(self) -> Self {
-        Float64(self.0.signum())
+        Float32(self.0.signum())
     }
 
     fn is_sign_positive(self) -> bool {
@@ -242,55 +242,55 @@ impl Float for Float64 {
     }
 
     fn mul_add(self, a: Self, b: Self) -> Self {
-        Float64(self.0.mul_add(a.0, b.0))
+        Float32(self.0.mul_add(a.0, b.0))
     }
 
     fn recip(self) -> Self {
-        Float64(self.0.recip())
+        Float32(self.0.recip())
     }
 
     fn powi(self, n: i32) -> Self {
-        Float64(self.0.powi(n))
+        Float32(self.0.powi(n))
     }
 
     fn powf(self, n: Self) -> Self {
-        Float64(self.0.powf(n.0))
+        Float32(self.0.powf(n.0))
     }
 
     fn sqrt(self) -> Self {
-        Float64(self.0.sqrt())
+        Float32(self.0.sqrt())
     }
 
     fn exp(self) -> Self {
-        Float64(self.0.exp())
+        Float32(self.0.exp())
     }
 
     fn exp2(self) -> Self {
-        Float64(self.0.exp2())
+        Float32(self.0.exp2())
     }
 
     fn ln(self) -> Self {
-        Float64(self.0.ln())
+        Float32(self.0.ln())
     }
 
     fn log(self, base: Self) -> Self {
-        Float64(self.0.log(base.0))
+        Float32(self.0.log(base.0))
     }
 
     fn log2(self) -> Self {
-        Float64(self.0.log2())
+        Float32(self.0.log2())
     }
 
     fn log10(self) -> Self {
-        Float64(self.0.log10())
+        Float32(self.0.log10())
     }
 
     fn max(self, other: Self) -> Self {
-        Float64(self.0.max(other.0))
+        Float32(self.0.max(other.0))
     }
 
     fn min(self, other: Self) -> Self {
-        Float64(self.0.min(other.0))
+        Float32(self.0.min(other.0))
     }
 
     fn abs_sub(self, other: Self) -> Self {
@@ -298,76 +298,76 @@ impl Float for Float64 {
     }
 
     fn cbrt(self) -> Self {
-        Float64(self.0.cbrt())
+        Float32(self.0.cbrt())
     }
 
     fn hypot(self, other: Self) -> Self {
-        Float64(self.0.hypot(other.0))
+        Float32(self.0.hypot(other.0))
     }
 
     fn sin(self) -> Self {
-        Float64(self.0.sin())
+        Float32(self.0.sin())
     }
 
     fn cos(self) -> Self {
-        Float64(self.0.cos())
+        Float32(self.0.cos())
     }
 
     fn tan(self) -> Self {
-        Float64(self.0.tan())
+        Float32(self.0.tan())
     }
 
     fn asin(self) -> Self {
-        Float64(self.0.asin())
+        Float32(self.0.asin())
     }
 
     fn acos(self) -> Self {
-        Float64(self.0.acos())
+        Float32(self.0.acos())
     }
 
     fn atan(self) -> Self {
-        Float64(self.0.atan())
+        Float32(self.0.atan())
     }
 
     fn atan2(self, other: Self) -> Self {
-        Float64(self.0.atan2(other.0))
+        Float32(self.0.atan2(other.0))
     }
 
     fn sin_cos(self) -> (Self, Self) {
         let (sin, cos) = self.0.sin_cos();
-        (Float64(sin), Float64(cos))
+        (Float32(sin), Float32(cos))
     }
 
     fn exp_m1(self) -> Self {
-        Float64(self.0.exp_m1())
+        Float32(self.0.exp_m1())
     }
 
     fn ln_1p(self) -> Self {
-        Float64(self.0.ln_1p())
+        Float32(self.0.ln_1p())
     }
 
     fn sinh(self) -> Self {
-        Float64(self.0.sinh())
+        Float32(self.0.sinh())
     }
 
     fn cosh(self) -> Self {
-        Float64(self.0.cosh())
+        Float32(self.0.cosh())
     }
 
     fn tanh(self) -> Self {
-        Float64(self.0.tanh())
+        Float32(self.0.tanh())
     }
 
     fn asinh(self) -> Self {
-        Float64(self.0.asinh())
+        Float32(self.0.asinh())
     }
 
     fn acosh(self) -> Self {
-        Float64(self.0.acosh())
+        Float32(self.0.acosh())
     }
 
     fn atanh(self) -> Self {
-        Float64(self.0.atanh())
+        Float32(self.0.atanh())
     }
 
     fn integer_decode(self) -> (u64, i16, i8) {
@@ -375,16 +375,16 @@ impl Float for Float64 {
     }
 
     fn to_degrees(self) -> Self {
-        Float64(self.0.to_degrees())
+        Float32(self.0.to_degrees())
     }
 
     fn to_radians(self) -> Self {
-        Float64(self.0.to_radians())
+        Float32(self.0.to_radians())
     }
 }
 
-impl Eq for Float64 {}
-impl Ord for Float64 {
+impl Eq for Float32 {}
+impl Ord for Float32 {
     fn cmp(&self, other: &Self) -> Ordering {
         // Define a custom ordering for NaN values
         if self.0.is_nan() && other.0.is_nan() {
@@ -398,58 +398,58 @@ impl Ord for Float64 {
         }
     }
 }
-impl From<f64> for Float64 {
-    fn from(value: f64) -> Self {
+impl From<f32> for Float32 {
+    fn from(value: f32) -> Self {
         Self(value)
     }
 }
-impl FromPrimitive for Float64 {
+impl FromPrimitive for Float32 {
     fn from_i64(n: i64) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_u64(n: u64) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
-    fn from_f64(n: f64) -> Option<Self> {
-        Some(Float64(n))
+    fn from_f32(n: f32) -> Option<Self> {
+        Some(Float32(n))
     }
 
     fn from_isize(n: isize) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_i8(n: i8) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_i16(n: i16) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_i32(n: i32) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_usize(n: usize) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_u8(n: u8) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_u16(n: u16) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 
     fn from_u32(n: u32) -> Option<Self> {
-        Some(Float64(n as f64))
+        Some(Float32(n as f32))
     }
 }
 
-impl ToPrimitive for Float64 {
+impl ToPrimitive for Float32 {
     fn to_i64(&self) -> Option<i64> {
         Some(self.0 as i64)
     }
@@ -458,7 +458,7 @@ impl ToPrimitive for Float64 {
         Some(self.0 as u64)
     }
 
-    fn to_f64(&self) -> Option<f64> {
+    fn to_f32(&self) -> Option<f32> {
         Some(self.0)
     }
 
@@ -494,8 +494,8 @@ impl ToPrimitive for Float64 {
         Some(self.0 as u32)
     }
 }
-impl From<u8> for Float64 {
+impl From<u8> for Float32 {
     fn from(value: u8) -> Self {
-        Self(value as f64)
+        Self(value as f32)
     }
 }

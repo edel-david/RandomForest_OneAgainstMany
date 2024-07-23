@@ -2,12 +2,19 @@
 name = "supa_cube_forest"
 version = "0.1.0"
 edition = "2021"
+authors = ["edel-david"] # github name
+[lib]
+name = "supa_cube_forest"
+path = "src/lib.rs"
 
+[[bin]]
+name = "test"
+path = "src/main.rs"
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 
 
-[profile.release]
-debug = false
+[profile.release] # for max performance, this lib is small enough that compile-times are not to long.
+debug = false # set to true for flamegraph
 codegen-units = 1
 lto = "fat"
 

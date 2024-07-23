@@ -130,18 +130,18 @@ mod tests {
 
     use super::Forest;
     use super::*;
-    use crate::float64::Float64;
+    use crate::float32::Float32;
     use ndarray_npy::read_npy;
     use rand::seq::SliceRandom;
 
     #[test]
     fn easiest_test() {
-        type G = Float64;
-        type R = Float64;
+        type G = Float32;
+        type R = Float32;
 
-        let data: Array2<f32> =
+        let data: Array2<f64> =
             read_npy("src/three_9_data.npy").expect("file should be present and correct");
-        let data = data.mapv(|x| Float64(x as f32));
+        let data = data.mapv(|x| Float32(x as f32));
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file should be present and correct");
 
@@ -152,13 +152,13 @@ mod tests {
 
     #[test]
     fn test_untrained() {
-        type G = Float64;
-        type R = Float64;
+        type G = Float32;
+        type R = Float32;
 
-        let data: Array2<f32> =
+        let data: Array2<f64> =
             read_npy("src/three_9_data.npy").expect("file is present and correct");
         //let data = array![[1,1,1,1],[2,2,2,2],[3,3,3,3],[4,4,4,4]];
-        let data = data.mapv(|x| Float64(x as f32));
+        let data = data.mapv(|x| Float32(x as f32));
         let target: Array1<i64> =
             read_npy("src/three_9_target.npy").expect("file is present and correct");
 
